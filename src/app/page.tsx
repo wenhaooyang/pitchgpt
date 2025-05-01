@@ -125,8 +125,9 @@ ${msg.content.trim()}`
       setDisplayedAssistantMessage('')
       setLoading(false)
     } catch (err) {
-      toast.error('Failed to fetch reply')
-      setLoading(false)
+      console.error(err);
+      toast.error('Failed to fetch reply');
+      setLoading(false);
     }
   }
 
