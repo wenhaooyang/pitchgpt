@@ -11,15 +11,16 @@ export async function POST(req: Request) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
-      'HTTP-Referer': 'http://localhost:3000', // required by OpenRouter
-      'X-Title': 'PitchGPT Dev',
+      'HTTP-Referer': 'https://pitchgpt.vercel.app',
+      'X-Title': 'PitchGPT',
     },
     body: JSON.stringify({
       model: 'openai/gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
-          content: 'You are PitchGPT, a startup coach helping founders improve their accelerator applications.',
+          content:
+            'You are PitchGPT, a startup coach helping founders improve their accelerator applications.',
         },
         {
           role: 'user',
@@ -30,11 +31,6 @@ export async function POST(req: Request) {
   })
 
   const data = await response.json()
-  console.log('🔍 OpenRouter raw response:', JSON.stringify(data, null, 2))
-  console.log('🧪 API key:', process.env.OPENROUTER_API_KEY)
-  console.log('All env keys:', Object.keys(process.env))
-
-
   const reply = data.choices?.[0]?.message?.content ?? 'Sorry, no reply was generated.'
   return NextResponse.json({ reply })
 }
