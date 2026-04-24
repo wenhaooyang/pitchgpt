@@ -37,6 +37,27 @@ const DownloadIcon = () => (
   </svg>
 )
 
+// ── Markdown renderer ─────────────────────────────────────────────────────────
+
+function renderMarkdown(text: string) {
+  const lines = text.split('\n')
+  const elements: React.ReactNode[] = []
+  let key = 0
+
+  for (const line of lines) {
+    // Bold: **text**
+    const parts = line.split(/\*\*(.+?)\*\*/g)
+    const rendered = parts.map((part, i) =>
+      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+    )
+    elements.push(<span key={key++}>{rendered}</span>)
+    elements.push(<br key={key++} />)
+  }
+  // Remove trailing <br>
+  elements.pop()
+  return elements
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Message {
@@ -213,22 +234,24 @@ export default function Page() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#020617' }}>
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className="w-60 flex-shrink-0 flex flex-col border-r border-white/5">
+      <aside style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)', background: '#020617' }}>
         {/* Logo */}
-        <div className="px-4 py-4 flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-white text-xs font-bold">P</span>
+        <div style={{ padding: '16px 16px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>P</span>
           </div>
-          <span className="text-white font-semibold tracking-tight text-sm">PitchGPT</span>
+          <span style={{ color: '#fff', fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>PitchGPT</span>
         </div>
 
         {/* New chat */}
-        <div className="px-3 mb-2">
+        <div style={{ padding: '0 12px 8px' }}>
           <button
             onClick={createNewSession}
-            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors text-sm"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 8, background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 13 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <PlusIcon />
             <span>New chat</span>
@@ -236,95 +259,111 @@ export default function Page() {
         </div>
 
         {/* Search */}
-        <div className="px-3 mb-3">
-          <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500">
-              <SearchIcon />
-            </span>
-            <input
-              type="text"
-              placeholder="Search messages…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 text-slate-300 placeholder-slate-600 text-xs rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition"
-            />
-          </div>
+        <div style={{ padding: '0 12px 12px', position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 22, top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }}>
+            <SearchIcon />
+          </span>
+          <input
+            type="text"
+            placeholder="Search messages…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, color: '#cbd5e1', fontSize: 12, padding: '6px 10px 6px 28px', outline: 'none', boxSizing: 'border-box' }}
+          />
         </div>
 
         {/* Session list / search results */}
-        <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
           {searchQuery ? (
             filteredResults.length > 0 ? (
               filteredResults.map((r, i) => (
                 <button
                   key={i}
                   onClick={() => { setCurrentSessionId(r.sessionId); setSearchQuery('') }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                  style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', marginBottom: 2 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <div className="text-[10px] text-slate-500 mb-0.5">{r.sessionName}</div>
-                  <div className="text-xs text-slate-300 truncate">{r.content}</div>
+                  <div style={{ fontSize: 10, color: '#475569', marginBottom: 2 }}>{r.sessionName}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.content}</div>
                 </button>
               ))
             ) : (
-              <p className="text-xs text-slate-600 px-3 py-2 italic">No results</p>
+              <p style={{ fontSize: 12, color: '#334155', padding: '8px 12px', fontStyle: 'italic' }}>No results</p>
             )
           ) : (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => setCurrentSessionId(session.id)}
-                className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                  session.id === currentSessionId
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'
-                }`}
-              >
-                {renamingSessionId === session.id ? (
-                  <input
-                    value={renameInput}
-                    onChange={(e) => setRenameInput(e.target.value)}
-                    onBlur={() => {
-                      setSessions((prev) =>
-                        prev.map((s) =>
-                          s.id === session.id ? { ...s, name: renameInput.trim() || s.name } : s
-                        )
-                      )
-                      setRenamingSessionId(null)
-                    }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                    className="flex-1 bg-transparent text-sm text-white focus:outline-none border-b border-slate-500 min-w-0"
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span
-                    className="flex-1 truncate text-sm min-w-0"
-                    onDoubleClick={(e) => {
-                      e.stopPropagation()
-                      setRenamingSessionId(session.id)
-                      setRenameInput(session.name)
-                    }}
-                  >
-                    {session.name}
-                  </span>
-                )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 hover:text-red-400 transition-all flex-shrink-0"
-                  title="Delete chat"
+            sessions.map((session) => {
+              const isActive = session.id === currentSessionId
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => setCurrentSessionId(session.id)}
+                  className="group"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    marginBottom: 2,
+                    background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    color: isActive ? '#fff' : '#64748b',
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
                 >
-                  <TrashIcon />
-                </button>
-              </div>
-            ))
+                  {renamingSessionId === session.id ? (
+                    <input
+                      value={renameInput}
+                      onChange={(e) => setRenameInput(e.target.value)}
+                      onBlur={() => {
+                        setSessions((prev) =>
+                          prev.map((s) =>
+                            s.id === session.id ? { ...s, name: renameInput.trim() || s.name } : s
+                          )
+                        )
+                        setRenamingSessionId(null)
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid #475569', color: '#fff', fontSize: 13, outline: 'none', minWidth: 0 }}
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span
+                      style={{ flex: 1, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation()
+                        setRenamingSessionId(session.id)
+                        setRenameInput(session.name)
+                      }}
+                    >
+                      {session.name}
+                    </span>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569', padding: 2, borderRadius: 4, display: 'flex', flexShrink: 0, opacity: 0 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.opacity = '1' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.opacity = '0' }}
+                    title="Delete chat"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              )
+            })
           )}
         </div>
 
         {/* Export */}
-        <div className="px-3 py-3 border-t border-white/5">
+        <div style={{ padding: '12px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <button
             onClick={() => { const s = sessions.find((s) => s.id === currentSessionId); if (s) exportSession(s) }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-400 transition-colors text-sm"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 8, background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 13 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#94a3b8' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#475569' }}
           >
             <DownloadIcon />
             <span>Export chat</span>
@@ -333,40 +372,40 @@ export default function Page() {
       </aside>
 
       {/* ── Main ────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col bg-white min-w-0">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', minWidth: 0 }}>
         {/* Header */}
-        <header className="px-6 py-3 border-b border-slate-100 flex-shrink-0">
-          <p className="font-semibold text-slate-900 text-sm leading-tight">
+        <header style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+          <p style={{ fontWeight: 600, fontSize: 14, color: '#0f172a', margin: 0 }}>
             {currentSession?.name || 'New Chat'}
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">Your AI startup pitch coach</p>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>Your AI startup pitch coach</p>
         </header>
 
         <Toaster
           position="top-center"
-          toastOptions={{
-            style: { fontSize: '13px', borderRadius: '10px' },
-          }}
+          toastOptions={{ style: { fontSize: '13px', borderRadius: '10px' } }}
         />
 
         {/* Messages */}
-        <main className="flex-1 overflow-y-auto">
+        <main style={{ flex: 1, overflowY: 'auto' }}>
           {!currentSession?.messages.length && !loading ? (
             /* Empty state */
-            <div className="h-full flex flex-col items-center justify-center px-6 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center mb-5 shadow-lg shadow-indigo-200">
-                <span className="text-white text-xl font-bold">P</span>
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px', textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, borderRadius: 16, background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: '0 8px 24px rgba(79,70,229,0.3)' }}>
+                <span style={{ color: '#fff', fontSize: 20, fontWeight: 700 }}>P</span>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900 mb-1.5">How can I help you pitch?</h2>
-              <p className="text-sm text-slate-400 mb-8 max-w-xs leading-relaxed">
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', margin: '0 0 8px' }}>How can I help you pitch?</h2>
+              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 32px', maxWidth: 280, lineHeight: 1.6 }}>
                 I&apos;m your AI startup coach. Ask me to review your application, refine your pitch, or sharpen your story.
               </p>
-              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: '100%', maxWidth: 360 }}>
                 {STARTER_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => setInput(prompt)}
-                    className="text-left px-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition-colors leading-snug"
+                    style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#fff', fontSize: 12, color: '#475569', cursor: 'pointer', lineHeight: 1.4 }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#a5b4fc'; e.currentTarget.style.background = '#eef2ff'; e.currentTarget.style.color = '#4338ca' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#475569' }}
                   >
                     {prompt}
                   </button>
@@ -374,39 +413,38 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <div className="px-6 py-6 space-y-5 max-w-2xl mx-auto">
+            <div style={{ padding: '24px', maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
               {currentSession?.messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                  style={{ display: 'flex', gap: 12, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}
                 >
                   {/* Avatar */}
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5 ${
-                      msg.role === 'user'
-                        ? 'bg-indigo-100 text-indigo-600'
-                        : 'bg-slate-900 text-white'
-                    }`}
-                  >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, fontSize: 11, fontWeight: 700, marginTop: 2,
+                    background: msg.role === 'user' ? '#e0e7ff' : '#0f172a',
+                    color: msg.role === 'user' ? '#4338ca' : '#fff',
+                  }}>
                     {msg.role === 'user' ? 'Y' : 'P'}
                   </div>
 
-                  <div className={`flex-1 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
-                    <div
-                      className={`inline-block px-4 py-2.5 rounded-2xl text-sm leading-relaxed max-w-[85%] whitespace-pre-wrap ${
-                        msg.role === 'user'
-                          ? 'bg-indigo-600 text-white rounded-tr-sm'
-                          : 'bg-slate-100 text-slate-800 rounded-tl-sm'
-                      }`}
-                    >
-                      {msg.content}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '10px 14px',
+                      borderRadius: msg.role === 'user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      maxWidth: '85%',
+                      background: msg.role === 'user' ? '#4f46e5' : '#f1f5f9',
+                      color: msg.role === 'user' ? '#fff' : '#1e293b',
+                    }}>
+                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                     {msg.timestamp && (
-                      <div className="text-[10px] text-slate-400 mt-1 px-1">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     )}
                   </div>
@@ -415,25 +453,14 @@ export default function Page() {
 
               {/* Typing indicator */}
               {loading && (
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mt-0.5">
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#fff', marginTop: 2 }}>
                     P
                   </div>
-                  <div className="px-4 py-3 bg-slate-100 rounded-2xl rounded-tl-sm">
-                    <div className="flex gap-1 items-center">
-                      <span
-                        className="w-1.5 h-1.5 bg-slate-400 rounded-full inline-block"
-                        style={{ animation: 'bounce 1.2s infinite 0ms' }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 bg-slate-400 rounded-full inline-block"
-                        style={{ animation: 'bounce 1.2s infinite 200ms' }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 bg-slate-400 rounded-full inline-block"
-                        style={{ animation: 'bounce 1.2s infinite 400ms' }}
-                      />
-                    </div>
+                  <div style={{ padding: '12px 16px', background: '#f1f5f9', borderRadius: '4px 18px 18px 18px', display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <span className="dot-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="dot-bounce" style={{ animationDelay: '200ms' }} />
+                    <span className="dot-bounce" style={{ animationDelay: '400ms' }} />
                   </div>
                 </div>
               )}
@@ -444,11 +471,14 @@ export default function Page() {
         </main>
 
         {/* Input */}
-        <footer className="px-6 py-4 border-t border-slate-100 flex-shrink-0">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center gap-3 bg-slate-50 rounded-2xl border border-slate-200 px-4 py-2.5 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+        <footer style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
+          <div style={{ maxWidth: 680, margin: '0 auto' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc', borderRadius: 24, border: '1px solid #e2e8f0', padding: '10px 12px 10px 18px' }}
+              onFocus={() => {}}
+            >
               <input
-                className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none text-sm"
+                style={{ flex: 1, background: 'transparent', border: 'none', color: '#0f172a', fontSize: 14, outline: 'none' }}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -463,13 +493,19 @@ export default function Page() {
               <button
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                style={{
+                  width: 32, height: 32, borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: loading || !input.trim() ? '#c7d2fe' : '#4f46e5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0, transition: 'background 0.15s',
+                  color: '#fff',
+                }}
                 aria-label="Send message"
               >
                 <SendIcon />
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 text-center mt-2">
+            <p style={{ fontSize: 10, color: '#cbd5e1', textAlign: 'center', marginTop: 8 }}>
               PitchGPT can make mistakes. Verify important details independently.
             </p>
           </div>
